@@ -24,7 +24,7 @@
 
       $containers.find('.map').each(function() {
         var mapContainer = this,
-            $message = $(mapContainer).children('.not-found'),
+            $message = $(mapContainer).css('height', settings.map.height).children('.not-found'),
             map = new google.maps.Map(mapContainer, {
               mapTypeControl: false,
               scrollwheel: false,

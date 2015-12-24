@@ -152,6 +152,12 @@ class ContentType implements ContentTypesInterface {
       '#default_value' => 11,
     ];
 
+    $form['info']['map']['height'] = [
+      '#type' => 'textfield',
+      '#title' => t('Height'),
+      '#default_value' => 400,
+    ];
+
     $form['info']['map']['styles'] = [
       '#type' => 'textarea',
       '#title' => t('Map styles'),

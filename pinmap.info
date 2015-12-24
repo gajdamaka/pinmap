@@ -1,5 +1,5 @@
 name = Pin Map
-description = TODO
+description = Collect addresses with an ability to display them on the map.
 core = 7.x
 php = 5.5
 
