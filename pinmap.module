@@ -1,0 +1,125 @@
+<?php
+/**
+ * @file
+ * Pin Map.
+ */
+
+// Administrative URL for module configuring.
+define('PINMAP_ADMIN_PATH', 'admin/config/pinmap');
+// Google API URL for requests for location information.
+define('PINMAP_GOOGLE_MAPS_REQUEST_URL', 'https://maps.google.com/maps/api/geocode/json');
+// Pattern for name of file. On every operation placeholder
+// will be replaced with a keyword ("import" or "export").
+define('PINMAP_IMPORT_EXPORT_FILE', 'public://pinmap.%s.csv');
+// The name of content type with address field provided by this module.
+define('PINMAP_DEFAULT_CONTENT_TYPE', 'address');
+// The name of field that will be attached to default content type.
+define('PINMAP_DEFAULT_FIELD_NAME', 'pinmap_address');
+
+// Include auxiliary functionality.
+require_once 'includes/pinmap.common.inc';
+
+/**
+ * Implements hook_ctools_api_plugins_directory().
+ */
+function pinmap_ctools_api_plugins_directory() {
+  return 'plugins';
+}
+
+/**
+ * Implements hook_menu().
+ */
+function pinmap_menu() {
+  $items = [];
+
+  $items[PINMAP_ADMIN_PATH] = [
+    'file' => 'includes/pinmap.pages.inc',
+    'title' => 'Pin Map',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => ['_pinmap_main_form', 3],
+    'access arguments' => ['administer pinmap'],
+  ];
+
+  foreach (pinmap_operation_titles() as $operation => $title) {
+    $items[PINMAP_ADMIN_PATH . '/' . $operation] = [
+      'type' => MENU_LOCAL_TASK,
+      'file' => "includes/pinmap.$operation.pages.inc",
+      'title' => $title,
+      'page callback' => 'drupal_get_form',
+      'page arguments' => ["_pinmap_{$operation}_form", 3],
+      'access callback' => '_pinmap_operation_accessible',
+      'access arguments' => ["access pinmap $operation"],
+    ];
+  }
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function pinmap_permission() {
+  $permissions = [];
+
+  $permissions['administer pinmap'] = [
+    'title' => t('Allow to administer Pin Map'),
+  ];
+
+  foreach ([
+    'import' => t('Allow addresses import'),
+    'export' => t('Allow addresses export'),
+  ] as $operation => $title) {
+    $permissions["access pinmap $operation"] = [
+      'title' => $title,
+    ];
+  }
+
+  return $permissions;
+}
+
+/**
+ * Implements hook_node_info().
+ */
+function pinmap_node_info() {
+  $info = [];
+
+  if (!pinmap_default_content_type_disabled()) {
+    $info[PINMAP_DEFAULT_CONTENT_TYPE] = [
+      'name' => t('Address'),
+      'base' => PINMAP_DEFAULT_CONTENT_TYPE,
+      'locked' => TRUE,
+      'has_title' => FALSE,
+      'description' => t('Addresses storage.'),
+    ];
+  }
+
+  return $info;
+}
+
+/**
+ * Implements hook_node_presave().
+ */
+function pinmap_node_presave(\stdClass $node) {
+  foreach (field_info_instances('node', $node->type) as $field => $instance) {
+    if ('addressfield' === $instance['widget']['module']) {
+      foreach ($node->{$field}[LANGUAGE_NONE] as &$item) {
+        if (empty($node->title)) {
+          $node->title = $item['organisation_name'];
+        }
+
+        $item['data'] = unserialize($item['data']);
+
+        $item['data']['locality'] = pinmap_get_address_info(sprintf(
+          '%s, %s, %s, %s, %s',
+          $item['organisation_name'],
+          $item['thoroughfare'],
+          $item['postal_code'],
+          $item['locality'],
+          $item['country']
+        ));
+
+        $item['data'] = serialize($item['data']);
+      }
+    }
+  }
+}

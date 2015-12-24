@@ -1,0 +1,12 @@
+<?php
+/**
+ * @file
+ * Pin Map installation.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function pinmap_install() {
+  pinmap_attach_address_field(PINMAP_DEFAULT_CONTENT_TYPE, PINMAP_DEFAULT_FIELD_NAME);
+}

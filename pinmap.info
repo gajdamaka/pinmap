@@ -1,0 +1,11 @@
+name = Pin Map
+description = TODO
+core = 7.x
+php = 5.5
+
+files[] = pinmap.test
+
+dependencies[] = image
+dependencies[] = ctools_api
+dependencies[] = table_element
+dependencies[] = addressfield_phone

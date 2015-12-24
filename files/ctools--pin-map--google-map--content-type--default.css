@@ -1,0 +1,53 @@
+.pin-map-area form {
+  display: table;
+  width: 100%;
+  margin-bottom: 10px;
+}
+.pin-map-area .not-found {
+  position: absolute;
+  z-index: 10;
+  left: 50%;
+  top: 0;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  opacity: 0;
+  padding: 5px;
+  background: #fff;
+}
+.pin-map-area form > * {
+  display: table-cell;
+  vertical-align: middle;
+  height: 30px;
+}
+.pin-map-area form > .input {
+  width: 80%;
+  padding-right: 2%;
+}
+.pin-map-area input,
+.pin-map-area button {
+  width: 100%;
+  height: 30px;
+  border: 1px solid #ccc;
+  margin: 0;
+  outline: 0;
+  padding: 0 5px;
+  font-size: 14px;
+  background: none;
+  line-height: 30px;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.pin-map-area input {
+  -webkit-appearance: textfield;
+  -moz-appearance: textfield;
+  -ms-appearance: textfield;
+  appearance: textfield;
+}
+.pin-map-area button {
+  cursor: pointer;
+  background: #eee;
+}
+.pin-map-area button:hover {
+  background: #e2e2e2;
+}
