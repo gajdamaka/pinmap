@@ -51,7 +51,6 @@ class ContentType implements ContentTypesInterface {
     list($content_type, $field_name) = explode(':', $variables['info']['content']['field']);
 
     $marker = file_load($variables['info']['icon']['url']);
-    $api_key = pinmap_google_api_key();
     $settings = [];
     $pins = [];
 
