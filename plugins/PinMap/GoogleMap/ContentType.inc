@@ -14,6 +14,13 @@ class ContentType implements ContentTypesInterface {
   const STYLES_EDITOR_URL = 'http://www.mapstylr.com/map-style-editor';
 
   /**
+   * Internal count of usage of this content type on the page.
+   *
+   * @var int
+   */
+  private static $i = 0;
+
+  /**
    * {@inheritdoc}
    */
   public static function name() {
@@ -48,45 +55,49 @@ class ContentType implements ContentTypesInterface {
    * {@inheritdoc}
    */
   public static function preprocess(array &$variables, array &$arguments, \ctools_context $context = NULL) {
-    list($content_type, $field_name) = explode(':', $variables['info']['content']['field']);
-
-    $marker = file_load($variables['info']['icon']['url']);
+    $icon = file_load($variables['info']['icon']['url']);
+    $content_types = [];
+    $field_names = [];
     $settings = [];
-    $pins = [];
 
-    foreach (node_load_multiple([], ['type' => $content_type, 'status' => 1]) as $nid => $node) {
-      /* @var array|bool $items */
-      $items = field_get_items('node', $node, $field_name, LANGUAGE_NONE);
+    // Handle multiple sources.
+    //
+    // @code
+    // ['address:pinmap_address', 'another_content_type:another_field_name']
+    // @endcode
+    foreach ($variables['info']['content']['field'] as $item) {
+      list($content_type, $field_name) = explode(':', $item);
 
-      if (FALSE !== $items) {
-        // Walk through the field items.
-        foreach ($items as $item) {
-          $item['data'] = unserialize($item['data']);
+      $content_types[$content_type] = $content_type;
+      // Relate field name with a content type to
+      // be able to use correct name in a loop.
+      $field_names[$content_type] = $field_name;
+    }
 
-          // Collect pins only with location information.
-          if (!empty($item['data']['locality'])) {
-            $pins[] = $item;
-          }
+    // Load only published nodes of selected, in settings, content types.
+    foreach (node_load_multiple([], ['type' => $content_types, 'status' => 1]) as $nid => $node) {
+      // Handle multiple field cardinality: walk through the items.
+      // Address field is not translatable that's why LANGUAGE_NONE is used.
+      // @see pinmap_attach_address_field()
+      foreach ((array) field_get_items('node', $node, $field_names[$node->type], LANGUAGE_NONE) as $item) {
+        // @see addressfield_field_schema()
+        $item['data'] = unserialize($item['data']);
+
+        // Collect pins only with location information.
+        if (!empty($item['data']['locality'])) {
+          $variables['info']['markers'][] = $item;
         }
       }
     }
 
-    if (empty($marker->uri)) {
-      unset($variables['info']['icon']['url']);
-    }
-    else {
-      $variables['info']['icon']['url'] = file_create_url($marker->uri);
+    if (FALSE !== $icon) {
+      $variables['info']['icon']['url'] = file_create_url($icon->uri);
     }
 
     // Set JS settings to the same namespace like this object.
-    drupal_array_set_nested_value($settings, explode('\\', __CLASS__), $variables['info'] + [
-      'pins' => $pins,
-      // Init an empty API URL for address queries.
-      // @see pinmap_get_address_info()
-      'apiUrl' => pinmap_get_google_api_url(['address' => '']),
-    ]);
-
-    drupal_add_js(pinmap_get_google_api_url([], self::GOOGLE_MAPS_URL), 'external');
+    drupal_array_set_nested_value($settings, array_merge(explode('\\', __CLASS__), [self::$i++]), $variables['info']);
+    // The "places" library need to use an autocomplete.
+    drupal_add_js(pinmap_get_google_api_url(['libraries' => 'places'], self::GOOGLE_MAPS_URL), 'external');
     drupal_add_js($settings, 'setting');
   }
 
@@ -104,7 +115,7 @@ class ContentType implements ContentTypesInterface {
       '#title' => t('Source'),
     ];
 
-    $form['info']['content'] += pinmap_form_source_field(t('Source'));
+    $form['info']['content'] += pinmap_form_source_field(t('Source'), TRUE);
 
     // Search form configuration.
     $form['info']['search'] = [
@@ -112,43 +123,35 @@ class ContentType implements ContentTypesInterface {
       '#title' => t('Search configuration'),
     ];
 
-    $form['info']['search']['placeholder'] = [
-      '#type' => 'textfield',
-      '#title' => t('Placeholder'),
-      '#default_value' => t('Search pharmacy'),
+    $form['info']['search']['disabled'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Do not use search'),
     ];
 
-    $form['info']['search']['button'] = [
-      '#type' => 'textfield',
-      '#title' => t('Button'),
-      '#default_value' => t('Find now'),
-    ];
-
-    $form['info']['search']['message'] = [
-      '#type' => 'textfield',
-      '#title' => t('Message'),
-      '#description' => t('This message will be displayed when search gave no results.'),
-      '#default_value' => t('No pharmacies in this region.'),
-    ];
+    foreach ([
+      'placeholder' => [
+        '#title' => t('Placeholder'),
+        '#default_value' => t('Search pharmacy'),
+      ],
+      'button' => [
+        '#title' => t('Button'),
+        '#default_value' => t('Find now'),
+      ],
+    ] as $field => $data) {
+      $form['info']['search'][$field] = $data + [
+        '#type' => 'textfield',
+        '#states' => [
+          'invisible' => [
+            ':input[name*=disabled]' => ['checked' => TRUE],
+          ],
+        ],
+      ];
+    }
 
     // Google map configuration.
     $form['info']['map'] = [
       '#type' => 'horizontal_tab',
       '#title' => t('Map settings'),
-    ];
-
-    $form['info']['map']['city'] = [
-      '#type' => 'textfield',
-      '#title' => t('Region'),
-      '#description' => t('Coordinates of the region will be used to set center of the map and for search queries.'),
-      '#default_value' => 'Berlin',
-    ];
-
-    $form['info']['map']['zoom'] = [
-      '#type' => 'textfield',
-      '#title' => t('Zoom'),
-      '#description' => t('Initial zoom of the map'),
-      '#default_value' => 11,
     ];
 
     $form['info']['map']['height'] = [
@@ -179,6 +182,7 @@ class ContentType implements ContentTypesInterface {
       '#type' => 'managed_file',
       '#title' => t('Icon'),
       '#description' => t('Better to not use icons bigger than 100x100 - it will look strange.'),
+      '#widget' => 'imce',
     ];
 
     $form['info']['icon']['animation'] = [
@@ -197,8 +201,6 @@ class ContentType implements ContentTypesInterface {
    * {@inheritdoc}
    */
   public static function configurationFormSubmit(array &$form, array &$form_state, array &$conf) {
-    $conf['info']['map']['region'] = pinmap_get_address_info($conf['info']['map']['city']);
-
     if (empty($conf['info']['map']['styles'])) {
       $conf['info']['map']['styles'] = '[]';
     }

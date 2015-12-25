@@ -327,23 +327,32 @@ function pinmap_get_google_api_url(array $query = [], $url = '') {
  *
  * @param string $label
  *   Field label.
+ * @param bool $multiple
+ *   Must be used only in content type plugin definition because there
+ *   we should not use redirection and able to display location from
+ *   multiple sources.
  *
  * @return array[]
  *   Form elements.
  */
-function pinmap_form_source_field($label) {
+function pinmap_form_source_field($label, $multiple = FALSE) {
   $fields = pinmap_get_valid_fields();
   $form = [];
 
   if (empty($fields)) {
     drupal_set_message(t('You have no correctly configured content types.'), 'warning');
-    drupal_goto(PINMAP_ADMIN_PATH);
+
+    if ($multiple) {
+      drupal_goto(PINMAP_ADMIN_PATH);
+    }
   }
   else {
     $form['field'] = [
       '#type' => 'select',
       '#title' => $label,
       '#options' => $fields,
+      '#required' => $multiple,
+      '#multiple' => $multiple,
     ];
   }
 
