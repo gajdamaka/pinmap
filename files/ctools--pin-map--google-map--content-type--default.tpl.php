@@ -7,7 +7,7 @@
  */
 ?>
 <section role="region" class="pin-map-area">
-  <form action="" role="search">
+  <form action="/" role="search">
     <div class="input">
       <input type="search" placeholder="<?php print $content['info']['search']['placeholder']; ?>" />
     </div>
@@ -18,9 +18,5 @@
     </div>
   </form>
 
-  <div class="map" role="presentation">
-    <div class="not-found">
-      <?php print $content['info']['search']['message']; ?>
-    </div>
-  </div>
+  <div class="map"></div>
 </section>

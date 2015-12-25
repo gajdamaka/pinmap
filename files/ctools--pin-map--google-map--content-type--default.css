@@ -3,17 +3,6 @@
   width: 100%;
   margin-bottom: 10px;
 }
-.pin-map-area .not-found {
-  position: absolute;
-  z-index: 10;
-  left: 50%;
-  top: 0;
-  border: 1px solid #ccc;
-  cursor: pointer;
-  opacity: 0;
-  padding: 5px;
-  background: #fff;
-}
 .pin-map-area form > * {
   display: table-cell;
   vertical-align: middle;
