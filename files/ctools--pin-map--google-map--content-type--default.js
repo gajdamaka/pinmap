@@ -197,10 +197,19 @@
         map.fitBounds(bounds);
       }
       else {
-        // Here we will have only one marker on the map and should center
-        // the map using it coordinates.
-        map.setCenter(options.markers[0].data.locality.geometry.location);
-        map.setZoom(11);
+        // Here will be available only one marker.
+        if (markers) {
+          // Here we will have only one marker on the map and should center
+          // the map using it coordinates.
+          map.setCenter(options.markers[0].data.locality.geometry.location);
+          map.setZoom(11);
+        }
+        else {
+          // This is a geographical center of Earth.
+          // @see https://en.wikipedia.org/wiki/Geographical_centre_of_Earth
+          map.setCenter({lat: 39, lng: 34});
+          map.setZoom(2);
+        }
       }
 
       return setMapCenter;

@@ -60,6 +60,8 @@ class ContentType implements ContentTypesInterface {
     $field_names = [];
     $settings = [];
 
+    $variables['info']['markers'] = [];
+
     // Handle multiple sources.
     //
     // @code
@@ -181,8 +183,8 @@ class ContentType implements ContentTypesInterface {
     $form['info']['icon']['url'] = [
       '#type' => 'managed_file',
       '#title' => t('Icon'),
-      '#description' => t('Better to not use icons bigger than 100x100 - it will look strange.'),
       '#widget' => 'imce',
+      '#description' => t('Better to not use icons bigger than 100x100 - it will look strange.'),
     ];
 
     $form['info']['icon']['animation'] = [
