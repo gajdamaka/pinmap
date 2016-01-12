@@ -104,7 +104,7 @@ class ContentType implements ContentTypesInterface {
   /**
    * {@inheritdoc}
    */
-  public static function configurationForm(array &$form, array &$form_state, array $conf) {
+  public static function configurationForm(array &$form, array &$form_state, array &$conf) {
     $form['info'] = [
       '#type' => 'horizontal_tabs',
     ];
@@ -204,6 +204,13 @@ class ContentType implements ContentTypesInterface {
     if (empty($conf['info']['map']['styles'])) {
       $conf['info']['map']['styles'] = '[]';
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function configurationFormElementCallback(array &$form, array &$form_state, array &$conf, array &$commands, array $element) {
+
   }
 
 }
