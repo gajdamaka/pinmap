@@ -87,6 +87,7 @@ class ContentType implements ContentTypesInterface {
 
         // Collect pins only with location information.
         if (!empty($item['data']['locality'])) {
+          $item['nid'] = $node->nid;
           $variables['info']['markers'][] = $item;
         }
       }
@@ -100,6 +101,7 @@ class ContentType implements ContentTypesInterface {
     drupal_array_set_nested_value($settings, array_merge(explode('\\', __CLASS__), [self::$i++]), $variables['info']);
     // The "places" library need to use an autocomplete.
     drupal_add_js(pinmap_get_google_api_url(['libraries' => 'places'], self::GOOGLE_MAPS_URL), 'external');
+    drupal_add_js(drupal_get_path('module', 'pinmap') . '/pinmap.js', ['scope' => 'footer']);
     drupal_add_js($settings, 'setting');
   }
 
@@ -156,6 +158,14 @@ class ContentType implements ContentTypesInterface {
       '#title' => t('Map settings'),
     ];
 
+    $form['info']['map']['radius'] = [
+      '#type' => 'textfield',
+      '#title' => t('Search radius'),
+      '#description' => t('Radius, which will look for the objects (in kilometers).'),
+      '#default_value' => 5,
+      '#element_validate' => ['element_validate_integer_positive'],
+    ];
+
     $form['info']['map']['height'] = [
       '#type' => 'textfield',
       '#title' => t('Height'),
@@ -206,6 +216,9 @@ class ContentType implements ContentTypesInterface {
     if (empty($conf['info']['map']['styles'])) {
       $conf['info']['map']['styles'] = '[]';
     }
+
+    // Transform into kilometers.
+    $conf['info']['map']['radius'] *= 1000;
   }
 
   /**

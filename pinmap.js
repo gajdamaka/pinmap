@@ -29,7 +29,7 @@
      *
      * @type {jQuery}
      */
-    var $searchForm = $container.find('form');
+    var $searchForm = $container.find('form[role=search]');
     /**
      * Search input inside of form.
      *
@@ -141,13 +141,21 @@
 
       return infoWindow;
     };
+    var circle = new google.maps.Circle({
+      map: map,
+      radius: options.map.radius,
+      fillOpacity: 0,
+      strokeOpacity: 0
+    });
     /**
      * Set map center using locations of all markers as bounds.
      *
      * @param {Object} place
      *   Place information.
      */
-    var setMapCenter = (function setMapCenter(place) {
+    var setMapCenter = (function setMapCenter(place, nodes) {
+      nodes = nodes || [];
+
       /**
        * Bounds collection for a centring the map.
        *
@@ -166,6 +174,7 @@
       if (place) {
         // Extend bounds by found address.
         bounds.extend(place.geometry.location);
+        circle.setCenter(place.geometry.location);
 
         // Change styles for marker of the desired place
         // to make it easy to distinguish from the rest.
@@ -190,8 +199,36 @@
       // Bounds will be set only if we have many markers. Otherwise
       // zoom level will be too big.
       if (markers > 1) {
+        var queryBounds = circle.getBounds();
+        /**
+         * Markers in search region.
+         *
+         * @type {google.maps.LatLng[]}
+         */
+        var found = [];
+        /**
+         * All markers on the map.
+         *
+         * @type {google.maps.LatLng[]}
+         */
+        var all = [];
+
         $.each(options.markers, function() {
-          bounds.extend(new google.maps.LatLng(this.data.locality.geometry.location));
+          var latlng = new google.maps.LatLng(this.data.locality.geometry.location);
+          // Extend "latlng" object by custom property to use it in future.
+          latlng.nid = this.nid;
+          // Collect all markers.
+          all.push(latlng);
+
+          // If marker located in a region.
+          if (queryBounds && queryBounds.contains(latlng)) {
+            found.push(latlng);
+          }
+        });
+
+        $.each(found.length ? found : all, function() {
+          nodes.push(this.nid);
+          bounds.extend(this);
         });
 
         map.fitBounds(bounds);
@@ -284,7 +321,16 @@
     });
     // Re-center the map when one of the autocomplete results chosen.
     google.maps.event.addDomListener(autocomplete, 'place_changed', function() {
-      setMapCenter(autocomplete.getPlace());
+      var nodes = [];
+
+      setMapCenter(autocomplete.getPlace(), nodes);
+
+      $(document).trigger('pinMapPlaceChanged', {
+        item: i,
+        nodes: nodes,
+        value: $searchInput.val(),
+        autocomplete: autocomplete
+      });
     });
   });
 })(jQuery);
