@@ -216,9 +216,6 @@ class ContentType implements ContentTypesInterface {
     if (empty($conf['info']['map']['styles'])) {
       $conf['info']['map']['styles'] = '[]';
     }
-
-    // Transform into kilometers.
-    $conf['info']['map']['radius'] *= 1000;
   }
 
   /**

@@ -143,7 +143,7 @@
     };
     var circle = new google.maps.Circle({
       map: map,
-      radius: options.map.radius,
+      radius: options.map.radius * 1000,
       fillOpacity: 0,
       strokeOpacity: 0
     });
