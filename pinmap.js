@@ -236,10 +236,18 @@
       else {
         // Here will be available only one marker.
         if (markers) {
-          // Here we will have only one marker on the map and should center
-          // the map using it coordinates.
-          map.setCenter(options.markers[0].data.locality.geometry.location);
-          map.setZoom(11);
+          // Check that the marker is not our place indicator.
+          if (options.markers.length) {
+            // Here we will have only one marker on the map and should center
+            // the map using it coordinates.
+            map.setCenter(options.markers[0].data.locality.geometry.location);
+            map.setZoom(11);
+          }
+          // Set coordinates for center using searchable place. Any markers
+          // not available here, except our place indicator.
+          else if (place) {
+            map.setCenter(place.geometry.location);
+          }
         }
         else {
           // This is a geographical center of Earth.
