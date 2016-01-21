@@ -15,7 +15,7 @@ function _pinmap_main_form(array $form, array &$form_state) {
   // @see pinmap_default_content_type_disabled()
   $form['pinmap_default_content_type_disabled'] = [
     '#type' => 'checkbox',
-    '#title' => t('Disabled default content type (%type)?', [
+    '#title' => t('Disable default content type (%type)?', [
       '%type' => PINMAP_DEFAULT_CONTENT_TYPE,
     ]),
     '#description' => t("Correctly-configured content type with an address field. You able to disable it but, to use this module in future, you'll need to define your own one. The default could be used as well, but initially created for demonstration."),
