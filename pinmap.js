@@ -153,8 +153,12 @@
      * @param {Object} place
      *   Place information.
      */
-    var setMapCenter = (function setMapCenter(place, nodes) {
-      nodes = nodes || [];
+    var setMapCenter = (function setMapCenter(place, data) {
+      data = data || {};
+      // Contains all nodes.
+      data.nodes = [];
+      // Are nodes in the search radius.
+      data.found = false;
 
       /**
        * Bounds collection for a centring the map.
@@ -226,8 +230,10 @@
           }
         });
 
-        $.each(found.length ? found : all, function() {
-          nodes.push(this.nid);
+        data.found = Boolean(found.length);
+
+        $.each(data.found ? found : all, function() {
+          data.nodes.push(this.nid);
           bounds.extend(this);
         });
 
@@ -329,16 +335,15 @@
     });
     // Re-center the map when one of the autocomplete results chosen.
     google.maps.event.addDomListener(autocomplete, 'place_changed', function() {
-      var nodes = [];
+      var data = [];
 
-      setMapCenter(autocomplete.getPlace(), nodes);
+      setMapCenter(autocomplete.getPlace(), data);
 
-      $(document).trigger('pinMapPlaceChanged', {
+      $(document).trigger('pinMapPlaceChanged', $.extend({
         item: i,
-        nodes: nodes,
         value: $searchInput.val(),
         autocomplete: autocomplete
-      });
+      }, data));
     });
   });
 })(jQuery);
