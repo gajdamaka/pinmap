@@ -155,7 +155,7 @@
      */
     var setMapCenter = (function setMapCenter(place, data) {
       data = data || {};
-      // Contains all nodes.
+      // Contains nodes that were found in radius or all nodes otherwise.
       data.nodes = [];
       // Are nodes in the search radius.
       data.found = false;
