@@ -212,6 +212,13 @@ class ContentType implements ContentTypesInterface {
   /**
    * {@inheritdoc}
    */
+  public static function configurationFormValidate(array &$form, array &$form_state, array &$values) {
+
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function configurationFormSubmit(array &$form, array &$form_state, array &$conf) {
     if (empty($conf['info']['map']['styles'])) {
       $conf['info']['map']['styles'] = '[]';
