@@ -147,7 +147,13 @@ function pinmap_create_node($content_type, $field_name, array $value) {
     $countries = array_flip(array_change_key_case(array_map('strtolower', _addressfield_country_options_list())));
   }
 
-  $key = strtolower($value['country']);
+  // Need to process the name of country. First of all it should be in
+  // lowercase, to prevent unexpected sets of characters. Then, we know
+  // that every word in country name starts from a capital letter. Then,
+  // when name was processed, translate it and transform back to lowercase.
+  // @codingStandardsIgnoreStart
+  $key = strtolower(t(ucwords(strtolower($value['country']))));
+  // @codingStandardsIgnoreEnd
   $node = new \stdClass();
 
   // Check country using full name.
