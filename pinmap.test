@@ -61,14 +61,24 @@ class PinMapTestCase extends \DrupalWebTestCase {
     // Ensure that option saved properly.
     $this->assertFieldChecked($field_id);
 
-    // Test validation of the Google API key. Note that error messages
-    // responded by Google and should not be wrapped in "t()" function.
+    // Check validation of third-party services API keys. Note that
+    // error messages should not be wrapped in "t()" function.
     foreach ([
-      'Invalid API key' => 'The provided API key is invalid.',
-      'AIzaSyCb2MUzeAL1fejcUvmtpg3wiF3ar-wQwSI' => 'This API project is not authorized to use this API.',
-    ] as $input_value => $expected_message) {
-      $this->drupalPost(PINMAP_ADMIN_PATH, ['pinmap_google_api_key' => $input_value], $button);
-      $this->assertRaw($expected_message);
+      'Google' => [
+        'Invalid API key' => 'The provided API key is invalid.',
+        'AIzaSyCb2MUzeAL1fejcUvmtpg3wiF3ar-wQwSI' => 'This API project is not authorized to use this API.',
+      ],
+      'Yandex' => [
+        'Invalid API key' => 'invalid key',
+      ],
+      'MapQuest' => [
+        'Invalid API key' => 'The AppKey submitted with this request is invalid.',
+      ],
+    ] as $provider => $values) {
+      foreach ($values as $input_value => $expected_message) {
+        $this->drupalPost(PINMAP_ADMIN_PATH, ['pinmap_' . strtolower($provider) . '_api_key' => $input_value], $button);
+        $this->assertRaw($expected_message);
+      }
     }
 
     // Clean caches to be sure that we had an affect on "hook_node_info()".

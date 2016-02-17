@@ -16,17 +16,16 @@ function _pinmap_main_form(array $form) {
   $options = [];
 
   foreach (pinmap_providers() as $provider => $class) {
-    $options[$provider] = ucfirst($provider);
+    $options[$provider] = $provider;
 
-    $items['pinmap_' . $provider . '_api_key'] = [
+    $items['pinmap_' . strtolower($provider) . '_api_key'] = [
       '#type' => 'textfield',
-      '#title' => t('@provider API key', ['@provider' => $options[$provider]]),
+      '#title' => t('@provider API key', ['@provider' => $provider]),
       '#description' => t("With API key you'll be able to perform more requests to !provider API. Read more about an API: !api_docs.", [
-        '!provider' => $options[$provider],
+        '!provider' => $provider,
         '!api_docs' => l($class::SERVICE_URL, $class::SERVICE_URL, ['attributes' => ['target' => '_blank']]),
       ]),
       '#default_value' => $class::getApiKey(),
-      '#pinmap_provider' => $provider,
       '#element_validate' => ['_pinmap_api_key_validate'],
       '#states' => [
         'visible' => [

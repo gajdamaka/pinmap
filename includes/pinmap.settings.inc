@@ -16,8 +16,8 @@ function pinmap_providers() {
 
   $providers = [];
 
-  foreach (['google', 'yandex', 'mapquest'] as $provider) {
-    $providers[$provider] = implode('\\', ['PinMap', 'Geocoder', 'Providers', ucfirst($provider)]);
+  foreach (['Google', 'Yandex', 'MapQuest'] as $provider) {
+    $providers[$provider] = implode('\\', ['PinMap', 'Geocoder', 'Providers', $provider]);
   }
 
   return $providers;
@@ -33,7 +33,7 @@ function pinmap_providers() {
  *   Geocoding provider.
  */
 function pinmap_provider($address = '') {
-  $provider = variable_get(__FUNCTION__, 'google');
+  $provider = variable_get(__FUNCTION__, PINMAP_DEFAULT_GEOCODING_PROVIDER);
 
   if (empty($address)) {
     return $provider;

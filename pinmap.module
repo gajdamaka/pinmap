@@ -15,6 +15,8 @@ define('PINMAP_IMPORT_EXPORT_FILE', 'public://pinmap.%s.csv');
 define('PINMAP_DEFAULT_CONTENT_TYPE', 'address');
 // The name of field that will be attached to default content type.
 define('PINMAP_DEFAULT_FIELD_NAME', 'pinmap_address');
+// The name of default object that implements PinMap Geocoding API.
+define('PINMAP_DEFAULT_GEOCODING_PROVIDER', 'Google');
 
 // Include configured settings.
 require_once 'includes/pinmap.settings.inc';
