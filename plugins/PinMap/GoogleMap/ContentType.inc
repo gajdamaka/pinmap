@@ -77,7 +77,7 @@ class ContentType implements ContentTypesInterface {
     }
 
     // Load only published nodes of selected, in settings, content types.
-    foreach (node_load_multiple([], ['type' => $content_types, 'status' => 1]) as $nid => $node) {
+    foreach (node_load_multiple([], ['type' => $content_types, 'status' => NODE_PUBLISHED]) as $nid => $node) {
       // Handle multiple field cardinality: walk through the items.
       // Address field is not translatable that's why LANGUAGE_NONE is used.
       // @see pinmap_attach_address_field()
@@ -87,8 +87,7 @@ class ContentType implements ContentTypesInterface {
 
         // Collect pins only with location information.
         if (!empty($item['data']['locality'])) {
-          $item['nid'] = $node->nid;
-          $variables['info']['markers'][] = $item;
+          $variables['info']['markers'][] = $item + ['nid' => $node->nid];
         }
       }
     }
@@ -97,10 +96,11 @@ class ContentType implements ContentTypesInterface {
       $variables['info']['icon']['url'] = file_create_url($icon->uri);
     }
 
+    function_exists('libraries_load') && libraries_load('markerclustererplus');
     // Set JS settings to the same namespace like this object.
     drupal_array_set_nested_value($settings, array_merge(explode('\\', __CLASS__), [self::$i++]), $variables['info']);
     // The "places" library need to use an autocomplete.
-    drupal_add_js(pinmap_get_google_api_url(['libraries' => 'places'], self::GOOGLE_MAPS_URL), 'external');
+    drupal_add_js(self::GOOGLE_MAPS_URL . '?libraries=places', 'external');
     drupal_add_js(drupal_get_path('module', 'pinmap') . '/pinmap.js', ['scope' => 'footer']);
     drupal_add_js($settings, 'setting');
   }
@@ -207,6 +207,27 @@ class ContentType implements ContentTypesInterface {
         'BOUNCE' => t('Bounce'),
       ],
     ];
+
+    // Configuration of marker clusters.
+    $form['info']['clusterer'] = [
+      '#type' => 'horizontal_tab',
+      '#title' => t('Marker clusters'),
+      '#access' => function_exists('libraries_info') && libraries_info('markerclustererplus'),
+    ];
+
+    $form['info']['clusterer']['maxZoom'] = [
+      '#type' => 'textfield',
+      '#title' => t('Maximum zoom level'),
+      '#default_value' => 15,
+      '#element_validate' => ['element_validate_integer_positive'],
+    ];
+
+    $form['info']['clusterer']['gridSize'] = [
+      '#type' => 'textfield',
+      '#title' => t('Grid size'),
+      '#default_value' => 80,
+      '#element_validate' => ['element_validate_integer_positive'],
+    ];
   }
 
   /**
@@ -223,6 +244,8 @@ class ContentType implements ContentTypesInterface {
     if (empty($conf['info']['map']['styles'])) {
       $conf['info']['map']['styles'] = '[]';
     }
+
+    $conf['info']['clusterer'] = array_map('intval', $conf['info']['clusterer']);
   }
 
   /**

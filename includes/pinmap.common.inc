@@ -5,55 +5,6 @@
  */
 
 /**
- * Request to Google Maps API.
- *
- * @param string $address
- *   Human readable address.
- * @param bool $return_raw
- *   Return raw query result.
- * @param array $query
- *   Additional query parameters.
- *
- * @return array|\stdClass
- *   An array with address information or an object - raw query result.
- */
-function pinmap_get_address_info($address, $return_raw = FALSE, array $query = []) {
-  $json = json_decode(file_get_contents(pinmap_get_google_api_url(array_merge($query, [
-    'address' => $address,
-  ]))));
-
-  if ($return_raw) {
-    return $json;
-  }
-
-  if (is_object($json) && 'ok' === strtolower($json->status)) {
-    return reset($json->results);
-  }
-
-  return [];
-}
-
-/**
- * Get configured Google API key.
- *
- * @return string
- *   Google API key or empty if not set.
- */
-function pinmap_google_api_key() {
-  return variable_get(__FUNCTION__, '');
-}
-
-/**
- * Whether to use a standard content type.
- *
- * @return bool
- *   State.
- */
-function pinmap_default_content_type_disabled() {
-  return variable_get(__FUNCTION__, FALSE);
-}
-
-/**
  * Get titles for available operations.
  *
  * @return string[]
@@ -61,8 +12,8 @@ function pinmap_default_content_type_disabled() {
  */
 function pinmap_operation_titles() {
   return [
-    'import' => 'Import from CSV',
-    'export' => 'Export to CSV',
+    'import' => t('Import from CSV'),
+    'export' => t('Export to CSV'),
   ];
 }
 
@@ -284,48 +235,6 @@ function pinmap_address_columns($testing_mode = FALSE) {
  */
 function pinmap_get_file_name($operation) {
   return sprintf(PINMAP_IMPORT_EXPORT_FILE, $operation);
-}
-
-/**
- * Construct URL for queries to Google API.
- *
- * @param string[] $query
- *   GET query parameters.
- * @param string $url
- *   Base URL.
- *
- * @return string
- *   Constructed URL.
- */
-function pinmap_get_google_api_url(array $query = [], $url = '') {
-  $url = (empty($url) ? PINMAP_GOOGLE_MAPS_REQUEST_URL : $url) . '?';
-  // Add key from a global settings only if it not passed as an argument.
-  $key = isset($query['key']) ? $query['key'] : pinmap_google_api_key();
-
-  // The "http_build_query" function sorts an array alphabetically. We
-  // need to be sure that key will not be on the last position, because
-  // this function could be called with empty arguments.
-  //
-  // @example
-  // @code
-  // pinmap_get_google_api_url([
-  //   'address' => '',
-  // ])
-  // @endcode
-  //
-  // Without this processing we'll have the next value: <URL>?address&key=<KEY>.
-  if (!empty($key)) {
-    $url .= sprintf("key=%s&", rawurlencode($key));
-  }
-
-  unset($query['key']);
-
-  // Append GET parameter to the query string.
-  if (!empty($query)) {
-    $url .= http_build_query($query);
-  }
-
-  return $url;
 }
 
 /**

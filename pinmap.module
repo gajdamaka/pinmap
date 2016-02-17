@@ -16,6 +16,8 @@ define('PINMAP_DEFAULT_CONTENT_TYPE', 'address');
 // The name of field that will be attached to default content type.
 define('PINMAP_DEFAULT_FIELD_NAME', 'pinmap_address');
 
+// Include configured settings.
+require_once 'includes/pinmap.settings.inc';
 // Include auxiliary functionality.
 require_once 'includes/pinmap.common.inc';
 
@@ -109,14 +111,21 @@ function pinmap_node_presave(\stdClass $node) {
 
         $item['data'] = unserialize($item['data']);
 
-        $item['data']['locality'] = pinmap_get_address_info(sprintf(
-          '%s, %s, %s, %s, %s',
-          $item['organisation_name'],
-          $item['thoroughfare'],
-          $item['postal_code'],
-          $item['locality'],
-          $item['country']
-        ));
+        try {
+          $item['data']['locality'] = pinmap_provider(sprintf(
+//            '%s, %s, %s, %s, %s',
+//            $item['organisation_name'],
+            // @todo Take a decision about organization name.
+            '%s, %s, %s, %s',
+            $item['thoroughfare'],
+            $item['postal_code'],
+            $item['locality'],
+            $item['country']
+          ))->fetch();
+        }
+        catch (\Exception $e) {
+          watchdog('pinmap', $e->getMessage());
+        }
 
         $item['data'] = serialize($item['data']);
       }

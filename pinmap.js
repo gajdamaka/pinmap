@@ -78,9 +78,35 @@
      *
      * @type {google.maps.Marker}
      */
-    var placeMarker = new google.maps.Marker({
-      map: map
+    var placeMarker = new google.maps.Marker();
+    /**
+     * Search radius.
+     *
+     * @type {google.maps.Circle}
+     */
+    var circle = new google.maps.Circle({
+      map: map,
+      radius: options.map.radius * 1000,
+      fillOpacity: 0,
+      strokeOpacity: 0
     });
+    /**
+     * All markers list.
+     *
+     * @type {Array}
+     */
+    var markersList = [];
+    /**
+     * Construct LatLng object.
+     *
+     * @param {{data: {locality: {lat: {Number}, lng: {Number}}}}} data
+     *
+     * @return {google.maps.LatLng}
+     *   LatLng object.
+     */
+    var latLng = function(data) {
+      return new google.maps.LatLng(data.data.locality);
+    };
     /**
      * Set location of a marker on the map.
      *
@@ -93,10 +119,11 @@
      *   Updated marker.
      */
     var setMarkerPlace = function(marker, place) {
-      marker.setPlace({
-        placeId: place.place_id,
-        location: place.geometry.location
-      });
+      marker.setPosition(place.hasOwnProperty('geometry') ? place.geometry.location : latLng(place));
+      // Attach marker to our map.
+      marker.setMap(map);
+
+      markersList.push(marker);
 
       return marker;
     };
@@ -127,7 +154,7 @@
         html.push('<strong>' + info.organisation_name + '</strong>');
       }
 
-      html.push(info.data.locality.formatted_address);
+      html.push(info.thoroughfare + ', ' + info.postal_code + ', ' + info.locality + ', ' + info.country);
 
       if (info.phone_number) {
         html.push(Drupal.t('Phone: @phone', {'@phone': info.phone_number}));
@@ -141,12 +168,6 @@
 
       return infoWindow;
     };
-    var circle = new google.maps.Circle({
-      map: map,
-      radius: options.map.radius * 1000,
-      fillOpacity: 0,
-      strokeOpacity: 0
-    });
     /**
      * Set map center using locations of all markers as bounds.
      *
@@ -175,7 +196,7 @@
 
       // This condition is necessary because this function will be triggered
       // on window resizing, map initializing and after inaccurate search.
-      if (place) {
+      if (place && place.geometry && place.geometry.location) {
         // Extend bounds by found address.
         bounds.extend(place.geometry.location);
         circle.setCenter(place.geometry.location);
@@ -218,7 +239,7 @@
         var all = [];
 
         $.each(options.markers, function() {
-          var latlng = new google.maps.LatLng(this.data.locality.geometry.location);
+          var latlng = latLng(this);
           // Extend "latlng" object by custom property to use it in future.
           latlng.nid = this.nid;
           // Collect all markers.
@@ -246,7 +267,7 @@
           if (options.markers.length) {
             // Here we will have only one marker on the map and should center
             // the map using it coordinates.
-            map.setCenter(options.markers[0].data.locality.geometry.location);
+            map.setCenter(latLng(options.markers[0]));
             map.setZoom(11);
           }
           // Set coordinates for center using searchable place. Any markers
@@ -309,9 +330,6 @@
        */
       var marker = new google.maps.Marker();
 
-      // Attach marker to our map.
-      marker.setMap(map);
-
       // If custom icon configured - set it.
       if (options.icon.url) {
         marker.setIcon(options.icon.url);
@@ -324,10 +342,14 @@
 
       // Locate marker on the map and add the "click" event listener for
       // opening information window on it.
-      setMarkerPlace(marker, this.data.locality).addListener('click', function() {
+      setMarkerPlace(marker, this).addListener('click', function() {
         infoWindow.open(map, this);
       });
     });
+
+    if (window.MarkerClusterer) {
+      new MarkerClusterer(map, markersList, options.clusterer);
+    }
 
     // Re-center the map on window resizing.
     google.maps.event.addDomListener(window, 'resize', function() {

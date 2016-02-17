@@ -11,7 +11,31 @@
  *
  * @internal
  */
-function _pinmap_main_form(array $form, array &$form_state) {
+function _pinmap_main_form(array $form) {
+  $items = [];
+  $options = [];
+
+  foreach (pinmap_providers() as $provider => $class) {
+    $options[$provider] = ucfirst($provider);
+
+    $items['pinmap_' . $provider . '_api_key'] = [
+      '#type' => 'textfield',
+      '#title' => t('@provider API key', ['@provider' => $options[$provider]]),
+      '#description' => t("With API key you'll be able to perform more requests to !provider API. Read more about an API: !api_docs.", [
+        '!provider' => $options[$provider],
+        '!api_docs' => l($class::SERVICE_URL, $class::SERVICE_URL, ['attributes' => ['target' => '_blank']]),
+      ]),
+      '#default_value' => $class::getApiKey(),
+      '#pinmap_provider' => $provider,
+      '#element_validate' => ['_pinmap_api_key_validate'],
+      '#states' => [
+        'visible' => [
+          ':input[name*=pinmap_provider]' => ['value' => $provider],
+        ],
+      ],
+    ];
+  }
+
   // @see pinmap_default_content_type_disabled()
   $form['pinmap_default_content_type_disabled'] = [
     '#type' => 'checkbox',
@@ -21,22 +45,23 @@ function _pinmap_main_form(array $form, array &$form_state) {
     '#description' => t("Correctly-configured content type with an address field. You able to disable it but, to use this module in future, you'll need to define your own one. The default could be used as well, but initially created for demonstration."),
   ];
 
-  // @see pinmap_google_api_key()
-  $form['pinmap_google_api_key'] = [
-    '#type' => 'textfield',
-    '#title' => t('Google API key'),
-    '#description' => t("With API key you'll be able to perform more requests to Google API."),
-    '#element_validate' => ['_pinmap_google_api_key_validate'],
+  $form['pinmap_provider'] = [
+    '#type' => 'select',
+    '#title' => t('Provider'),
+    '#options' => $options,
   ];
 
-  foreach ($form as $field => $definition) {
-    if (function_exists($field)) {
-      $form[$field]['#default_value'] = $field();
-    }
-  }
+  $form += $items;
 
   // Reset content types cache to react on disabling default content type.
   $form['#submit'][] = 'node_type_cache_reset';
+
+  // Set default values.
+  foreach (element_children($form) as $child) {
+    if (!array_key_exists('#default_value', $form[$child]) && function_exists($child)) {
+      $form[$child]['#default_value'] = $child();
+    }
+  }
 
   return system_settings_form($form);
 }
@@ -44,16 +69,19 @@ function _pinmap_main_form(array $form, array &$form_state) {
 /**
  * {@inheritdoc}
  *
- * @see _pinmap_main_form()
- *
  * @internal
+ *
+ * @see _pinmap_main_form()
  */
-function _pinmap_google_api_key_validate(array $element, array &$form_state, array &$form) {
-  // This request will always fails when key is incorrect. The reason
-  // will stored in "error_message" property. Empty value allowed.
-  $data = pinmap_get_address_info('', TRUE, ['key' => $element['#value']]);
-
-  if (isset($data->error_message)) {
-    form_error($form['pinmap_google_api_key'], $data->error_message);
+function _pinmap_api_key_validate(array $element) {
+  try {
+    // Yeah, babe! I was born there :)
+    pinmap_provider('Ordzhonikidze')->setApiKey($element['#value']);
+  }
+  catch (\RuntimeException $e) {
+    form_error($element, $e->getMessage());
+  }
+  catch (\Exception $e) {
+    // Here could an error about incorrect coordinates or address.
   }
 }

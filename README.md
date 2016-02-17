@@ -15,6 +15,7 @@ Collect addresses with an ability to display them on the Google map.
   - Could be enabled/disabled
   - Inaccurate queries available
   - Autocomplete powered by Google API
+- [Marker Clusterer](https://github.com/mahnunchik/markerclustererplus) integration
 
 Import/export could be made to different destinations. `Destination` - is a field of `Postal code` type provided by [Address Field](https://www.drupal.org/project/addressfield) module (entity of `node` type is used to host content).
 
@@ -29,3 +30,11 @@ Ready-to-go content type - is the same as `destination` described above. To prep
   - Enable `Phone` (optional)
 
 That's all! From now you can import to or export from this field.
+
+## Use Marker Clusterer library
+
+Download and define the library with the `markerclustererplus` name. In simple words it just be available for loading by executing this code:
+
+```php
+libraries_load('markerclustererplus')
+```

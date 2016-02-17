@@ -67,7 +67,6 @@ class PinMapTestCase extends \DrupalWebTestCase {
       'Invalid API key' => 'The provided API key is invalid.',
       'AIzaSyCb2MUzeAL1fejcUvmtpg3wiF3ar-wQwSI' => 'This API project is not authorized to use this API.',
     ] as $input_value => $expected_message) {
-      // @see pinmap_google_api_key()
       $this->drupalPost(PINMAP_ADMIN_PATH, ['pinmap_google_api_key' => $input_value], $button);
       $this->assertRaw($expected_message);
     }
