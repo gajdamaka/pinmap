@@ -73,6 +73,7 @@ function _pinmap_main_form(array $form) {
  * @see _pinmap_main_form()
  */
 function _pinmap_api_key_validate(array $element) {
+  // @todo Fix incorrect values between states.
   try {
     // Yeah, babe! I was born there :)
     pinmap_provider('Ordzhonikidze')->setApiKey($element['#value']);

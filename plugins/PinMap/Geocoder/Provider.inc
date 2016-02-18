@@ -21,6 +21,10 @@ abstract class Provider {
    * An URL to API documentation.
    */
   const SERVICE_URL = '';
+  /**
+   * Number of seconds to wait before the next request.
+   */
+  const FREQUENCY = 0;
 
   /**
    * Query arguments.
@@ -83,6 +87,10 @@ abstract class Provider {
     // Append GET parameter to the query string.
     if (!empty($this->query)) {
       $url .= http_build_query($this->query);
+    }
+
+    if (static::FREQUENCY > 0) {
+      sleep(static::FREQUENCY);
     }
 
     $request = drupal_http_request($url);
