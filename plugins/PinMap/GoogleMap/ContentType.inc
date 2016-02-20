@@ -56,50 +56,24 @@ class ContentType implements ContentTypesInterface {
    */
   public static function preprocess(array &$variables, array &$arguments, \ctools_context $context = NULL) {
     $icon = file_load($variables['info']['icon']['url']);
-    $content_types = [];
-    $field_names = [];
     $settings = [];
-
-    $variables['info']['markers'] = [];
-
-    // Handle multiple sources.
-    //
-    // @code
-    // ['address:pinmap_address', 'another_content_type:another_field_name']
-    // @endcode
-    foreach ($variables['info']['content']['field'] as $item) {
-      list($content_type, $field_name) = explode(':', $item);
-
-      $content_types[$content_type] = $content_type;
-      // Relate field name with a content type to
-      // be able to use correct name in a loop.
-      $field_names[$content_type] = $field_name;
-    }
-
-    // Load only published nodes of selected, in settings, content types.
-    foreach (node_load_multiple([], ['type' => $content_types, 'status' => NODE_PUBLISHED]) as $nid => $node) {
-      // Handle multiple field cardinality: walk through the items.
-      // Address field is not translatable that's why LANGUAGE_NONE is used.
-      // @see pinmap_attach_address_field()
-      foreach ((array) field_get_items('node', $node, $field_names[$node->type], LANGUAGE_NONE) as $item) {
-        // @see addressfield_field_schema()
-        $item['data'] = unserialize($item['data']);
-
-        // Collect pins only with location information.
-        if (!empty($item['data']['locality'])) {
-          $variables['info']['markers'][] = $item + ['nid' => $node->nid];
-        }
-      }
-    }
 
     if (FALSE !== $icon) {
       $variables['info']['icon']['url'] = file_create_url($icon->uri);
     }
 
+    // @see pinmap_rebuild_data()
+    foreach ($variables['info']['content']['field'] as $item) {
+      // Relate field name with a content type to
+      // be able to use correct name in a loop.
+      list($content_type, $field_name) = explode(':', $item);
+      $variables['info']['files'][] = file_create_url(sprintf(PINMAP_MARKERS_FILE, $content_type, $field_name));
+    }
+
     function_exists('libraries_load') && libraries_load('markerclustererplus');
     // Set JS settings to the same namespace like this object.
     drupal_array_set_nested_value($settings, array_merge(explode('\\', __CLASS__), [self::$i++]), $variables['info']);
-    // The "places" library need to use an autocomplete.
+    // The "places" library needed to use an autocomplete.
     drupal_add_js(self::GOOGLE_MAPS_URL . '?libraries=places', 'external');
     drupal_add_js(drupal_get_path('module', 'pinmap') . '/pinmap.js', ['scope' => 'footer']);
     drupal_add_js($settings, 'setting');

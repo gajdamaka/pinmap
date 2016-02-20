@@ -76,7 +76,11 @@ class PinMapTestCase extends \DrupalWebTestCase {
       ],
     ] as $provider => $values) {
       foreach ($values as $input_value => $expected_message) {
-        $this->drupalPost(PINMAP_ADMIN_PATH, ['pinmap_' . strtolower($provider) . '_api_key' => $input_value], $button);
+        $this->drupalPost(PINMAP_ADMIN_PATH, [
+          'pinmap_provider' => $provider,
+          pinmap_api_key_field_name($provider) => $input_value,
+        ], $button);
+
         $this->assertRaw($expected_message);
       }
     }

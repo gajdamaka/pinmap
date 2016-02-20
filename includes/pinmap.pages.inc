@@ -18,7 +18,7 @@ function _pinmap_main_form(array $form) {
   foreach (pinmap_providers() as $provider => $class) {
     $options[$provider] = $provider;
 
-    $items['pinmap_' . strtolower($provider) . '_api_key'] = [
+    $items[pinmap_api_key_field_name($provider)] = [
       '#type' => 'textfield',
       '#title' => t('@provider API key', ['@provider' => $provider]),
       '#description' => t("With API key you'll be able to perform more requests to !provider API. Read more about an API: !api_docs.", [
@@ -26,7 +26,6 @@ function _pinmap_main_form(array $form) {
         '!api_docs' => l($class::SERVICE_URL, $class::SERVICE_URL, ['attributes' => ['target' => '_blank']]),
       ]),
       '#default_value' => $class::getApiKey(),
-      '#element_validate' => ['_pinmap_api_key_validate'],
       '#states' => [
         'visible' => [
           ':input[name*=pinmap_provider]' => ['value' => $provider],
@@ -52,6 +51,7 @@ function _pinmap_main_form(array $form) {
 
   $form += $items;
 
+  $form['#validate'][] = __FUNCTION__ . '_validate';
   // Reset content types cache to react on disabling default content type.
   $form['#submit'][] = 'node_type_cache_reset';
 
@@ -61,6 +61,20 @@ function _pinmap_main_form(array $form) {
       $form[$child]['#default_value'] = $child();
     }
   }
+
+  $form['rebuild'] = [
+    '#type' => 'fieldset',
+    '#title' => t('Rebuild data'),
+    '#collapsed' => TRUE,
+    '#collapsible' => TRUE,
+    '#description' => t('When you have imported, changed or added something then data in JSON sources becomes outdated.'),
+  ];
+
+  $form['rebuild'][] = [
+    '#type' => 'submit',
+    '#value' => t('Rebuild JSON'),
+    '#submit' => ['pinmap_rebuild_data'],
+  ];
 
   return system_settings_form($form);
 }
@@ -72,14 +86,18 @@ function _pinmap_main_form(array $form) {
  *
  * @see _pinmap_main_form()
  */
-function _pinmap_api_key_validate(array $element) {
-  // @todo Fix incorrect values between states.
+function _pinmap_main_form_validate(array &$form, array &$form_state) {
+  $api_key_field_name = pinmap_api_key_field_name($form_state['values']['pinmap_provider']);
+
   try {
     // Yeah, babe! I was born there :)
-    pinmap_provider('Ordzhonikidze')->setApiKey($element['#value']);
+    pinmap_provider('Ordzhonikidze', $form_state['values']['pinmap_provider'])
+      ->setApiKey($form_state['values'][$api_key_field_name]);
   }
   catch (\RuntimeException $e) {
-    form_error($element, $e->getMessage());
+    form_error($form[$api_key_field_name], $e->getMessage());
+    // Disallow to change provider until API key won't be correct or empty.
+    $form['pinmap_provider']['#attributes']['disabled'] = TRUE;
   }
   catch (\Exception $e) {
     // Here could an error about incorrect coordinates or address.

@@ -6,8 +6,8 @@
 
 // Administrative URL for module configuring.
 define('PINMAP_ADMIN_PATH', 'admin/config/pinmap');
-// Google API URL for requests for location information.
-define('PINMAP_GOOGLE_MAPS_REQUEST_URL', 'https://maps.google.com/maps/api/geocode/json');
+// JSON representation of all addresses.
+define('PINMAP_MARKERS_FILE', 'public://pinmap.markers-%s-%s.json');
 // Pattern for name of file. On every operation placeholder
 // will be replaced with a keyword ("import" or "export").
 define('PINMAP_IMPORT_EXPORT_FILE', 'public://pinmap.%s.csv');
@@ -114,10 +114,7 @@ function pinmap_node_presave(\stdClass $node) {
         $item['data'] = unserialize($item['data']);
 
         try {
-          $item['data']['locality'] = pinmap_provider(sprintf(
-//            '%s, %s, %s, %s, %s',
-//            $item['organisation_name'],
-            // @todo Take a decision about organization name.
+          $item['data']['coords'] = pinmap_provider(sprintf(
             '%s, %s, %s, %s',
             $item['thoroughfare'],
             $item['postal_code'],

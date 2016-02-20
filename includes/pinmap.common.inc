@@ -163,6 +163,11 @@ function pinmap_batch_set($operation, array $arguments) {
       'finished' => '_pinmap_batch_finished',
       'operations' => $arguments,
     ]);
+
+    if (function_exists('background_batch_process_batch')) {
+      background_batch_process_batch();
+      drupal_goto('admin/config/system/batch/overview');
+    }
   }
 }
 
@@ -369,6 +374,95 @@ function pinmap_attach_address_field($content_type, $field_name) {
   }
   catch (\Exception $e) {
 
+  }
+}
+
+/**
+ * Select values from field table.
+ *
+ * @param string $entity_type
+ *   An entity type.
+ * @param string $bundle
+ *   Entity bundle.
+ * @param string $field_name
+ *   Field name of the entity.
+ * @param string[] $columns
+ *   Column names in field table.
+ *
+ * @return \SelectQuery
+ *   Query object.
+ *
+ * @throws \InvalidArgumentException
+ *   When field does not exists.
+ */
+function pinamp_field_query($entity_type, $bundle, $field_name, array $columns = []) {
+  $field_info = field_info_field(PINMAP_DEFAULT_FIELD_NAME);
+
+  if (empty($field_info)) {
+    throw new \InvalidArgumentException(t('Field name @name is invalid.', ['@name' => $field_name]));
+  }
+
+  foreach ($columns as $i => $column) {
+    if (isset($field_info['columns'][$column])) {
+      $columns[$i] = $field_name . '_' . $column;
+    }
+  }
+
+  return db_select('field_data_' . $field_name, $field_name)
+    ->fields($field_name, $columns)
+    ->condition('entity_type', $entity_type)
+    ->condition('bundle', $bundle);
+}
+
+/**
+ * Rebuild all JSON sources.
+ */
+function pinmap_rebuild_data() {
+  // Field columns.
+  $columns = ['entity_id', 'organisation_name', 'thoroughfare', 'postal_code', 'locality', 'country', 'data'];
+  $fields = [];
+
+  // Process all PinMap panes.
+  foreach (ctools_api_get_panes_of_type('PinMap\GoogleMap\ContentType') as $pane) {
+    $conf = unserialize($pane->configuration);
+
+    // Handle multiple sources.
+    //
+    // @code
+    // ['address:pinmap_address', 'another_content_type:another_field_name']
+    // @endcode
+    foreach ($conf['info']['content']['field'] as $item) {
+      // Relate field name with a content type to
+      // be able to use correct name in a loop.
+      list($content_type, $field_name) = explode(':', $item);
+      $fields[$content_type][] = $field_name;
+    }
+  }
+
+  foreach ($fields as $content_type => $field_names) {
+    foreach ($field_names as $field_name) {
+      $json = [];
+
+      foreach (pinamp_field_query('node', $content_type, $field_name, $columns)->execute()->fetchAll() as $entry) {
+        $values = [];
+
+        foreach ($entry as $column => $value) {
+          $values[ltrim(str_replace($field_name, '', $column), '_')] = $value;
+        }
+
+        $values['data'] = unserialize($values['data']);
+
+        foreach (['phone_number', 'coords'] as $subcolumn) {
+          $values[$subcolumn] = isset($values['data'][$subcolumn]) ? $values['data'][$subcolumn] : '';
+        }
+
+        unset($values['data']);
+
+        $json[] = $values;
+      }
+
+      file_unmanaged_save_data(json_encode($json), sprintf(PINMAP_MARKERS_FILE, $content_type, $field_name), FILE_EXISTS_REPLACE);
+    }
   }
 }
 
