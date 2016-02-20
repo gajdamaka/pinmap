@@ -11,9 +11,6 @@
  *   Geocoding providers.
  */
 function pinmap_providers() {
-  // @todo Take care about that. It added to trigger autoloading mechanism.
-  ctools_api_get_plugins('');
-
   $providers = [];
 
   foreach (['Google', 'Yandex', 'MapQuest'] as $provider) {

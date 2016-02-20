@@ -24,13 +24,6 @@ require_once 'includes/pinmap.settings.inc';
 require_once 'includes/pinmap.common.inc';
 
 /**
- * Implements hook_ctools_api_plugins_directory().
- */
-function pinmap_ctools_api_plugins_directory() {
-  return 'plugins';
-}
-
-/**
  * Implements hook_menu().
  */
 function pinmap_menu() {
