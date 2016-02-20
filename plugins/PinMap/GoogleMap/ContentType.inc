@@ -58,6 +58,8 @@ class ContentType implements ContentTypesInterface {
     $icon = file_load($variables['info']['icon']['url']);
     $settings = [];
 
+    $variables['info']['files'] = [];
+
     if (FALSE !== $icon) {
       $variables['info']['icon']['url'] = file_create_url($icon->uri);
     }
@@ -67,7 +69,11 @@ class ContentType implements ContentTypesInterface {
       // Relate field name with a content type to
       // be able to use correct name in a loop.
       list($content_type, $field_name) = explode(':', $item);
-      $variables['info']['files'][] = file_create_url(sprintf(PINMAP_MARKERS_FILE, $content_type, $field_name));
+      $uri = sprintf(PINMAP_MARKERS_FILE, $content_type, $field_name);
+
+      if (file_exists($uri)) {
+        $variables['info']['files'][] = file_create_url($uri);
+      }
     }
 
     function_exists('libraries_load') && libraries_load('markerclustererplus');

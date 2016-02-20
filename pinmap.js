@@ -36,6 +36,8 @@
     }
 
     $.when.apply($, functions).done(function(markers) {
+      markers = markers || [];
+
       /**
        * Search form inside of container.
        *
