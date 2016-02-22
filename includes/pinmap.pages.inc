@@ -15,20 +15,20 @@ function _pinmap_main_form(array $form) {
   $items = [];
   $options = [];
 
-  foreach (pinmap_providers() as $provider => $class) {
-    $options[$provider] = $provider;
+  foreach (pinmap_providers() as $name => $class) {
+    $options[$name] = $name;
 
-    $items[pinmap_api_key_field_name($provider)] = [
+    $items[$class::variable('api_key')] = [
       '#type' => 'textfield',
-      '#title' => t('@provider API key', ['@provider' => $provider]),
+      '#title' => t('@provider API key', ['@provider' => $name]),
       '#description' => t("With API key you'll be able to perform more requests to !provider API. Read more about an API: !api_docs.", [
-        '!provider' => $provider,
+        '!provider' => $name,
         '!api_docs' => l($class::SERVICE_URL, $class::SERVICE_URL, ['attributes' => ['target' => '_blank']]),
       ]),
       '#default_value' => $class::getApiKey(),
       '#states' => [
         'visible' => [
-          ':input[name*=pinmap_provider]' => ['value' => $provider],
+          ':input[name*=pinmap_provider]' => ['value' => $name],
         ],
       ],
     ];
@@ -87,12 +87,12 @@ function _pinmap_main_form(array $form) {
  * @see _pinmap_main_form()
  */
 function _pinmap_main_form_validate(array &$form, array &$form_state) {
-  $api_key_field_name = pinmap_api_key_field_name($form_state['values']['pinmap_provider']);
+  // Yeah, babe! I was born there :)
+  $provider = pinmap_provider('Ordzhonikidze', $form_state['values']['pinmap_provider']);
+  $api_key_field_name = $provider::variable('api_key');
 
   try {
-    // Yeah, babe! I was born there :)
-    pinmap_provider('Ordzhonikidze', $form_state['values']['pinmap_provider'])
-      ->setApiKey($form_state['values'][$api_key_field_name]);
+    $provider->requestApiKeyChange($form_state['values'][$api_key_field_name]);
   }
   catch (\RuntimeException $e) {
     form_error($form[$api_key_field_name], $e->getMessage());

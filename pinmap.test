@@ -75,10 +75,13 @@ class PinMapTestCase extends \DrupalWebTestCase {
         'Invalid API key' => 'The AppKey submitted with this request is invalid.',
       ],
     ] as $provider => $values) {
+      $class = pinmap_provider('Ordzhonikidze', $provider);
+      $api_key_field_name = $class::variable('api_key');
+
       foreach ($values as $input_value => $expected_message) {
         $this->drupalPost(PINMAP_ADMIN_PATH, [
           'pinmap_provider' => $provider,
-          pinmap_api_key_field_name($provider) => $input_value,
+          $api_key_field_name => $input_value,
         ], $button);
 
         $this->assertRaw($expected_message);

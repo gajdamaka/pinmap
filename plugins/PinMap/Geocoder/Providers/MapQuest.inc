@@ -23,10 +23,6 @@ class MapQuest extends Provider {
    * {@inheritdoc}
    */
   const SERVICE_URL = 'http://open.mapquestapi.com/geocoding/';
-  /**
-   * {@inheritdoc}
-   */
-  const FREQUENCY = 1;
 
   /**
    * {@inheritdoc}

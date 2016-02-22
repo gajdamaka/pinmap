@@ -21,10 +21,6 @@ abstract class Provider {
    * An URL to API documentation.
    */
   const SERVICE_URL = '';
-  /**
-   * Number of seconds to wait before the next request.
-   */
-  const FREQUENCY = 0;
 
   /**
    * Query arguments.
@@ -89,10 +85,6 @@ abstract class Provider {
       $url .= http_build_query($this->query);
     }
 
-    if (static::FREQUENCY > 0) {
-      sleep(static::FREQUENCY);
-    }
-
     $request = drupal_http_request($url);
     $this->result = json_decode($request->data);
 
@@ -123,7 +115,7 @@ abstract class Provider {
    * @param string $key
    *   API key to set.
    */
-  final public function setApiKey($key) {
+  final public function requestApiKeyChange($key) {
     if (!empty($key)) {
       $this->query['key'] = $key;
 
@@ -135,31 +127,6 @@ abstract class Provider {
 
       $this->validateApiKey();
     }
-
-    variable_set(self::variablePrefix('api_key'), $key);
-  }
-
-  /**
-   * Get an API key.
-   *
-   * @return string
-   *   Configured API key.
-   */
-  final public static function getApiKey() {
-    return variable_get(self::variablePrefix('api_key'), '');
-  }
-
-  /**
-   * Transform class name and namespace to variable prefix.
-   *
-   * @param string $suffix
-   *   Suffix for the variable name.
-   *
-   * @return string
-   *   Prefixed variable name.
-   */
-  final private static function variablePrefix($suffix) {
-    return strtolower(strtr(static::class, ['\\' => '_']) . '_' . $suffix);
   }
 
   /**
@@ -174,6 +141,29 @@ abstract class Provider {
     if (isset($this->result->error_message)) {
       throw new \RuntimeException($this->result->error_message);
     }
+  }
+
+  /**
+   * Get an API key.
+   *
+   * @return string
+   *   Configured API key.
+   */
+  final public static function getApiKey() {
+    return variable_get(self::variable('api_key'), '');
+  }
+
+  /**
+   * Transform class name and namespace to variable prefix.
+   *
+   * @param string $name
+   *   Suffix for the variable name.
+   *
+   * @return string
+   *   Prefixed variable name.
+   */
+  final public static function variable($name) {
+    return strtolower(strtr(static::class, ['\\' => '_']) . '_' . $name);
   }
 
   /**

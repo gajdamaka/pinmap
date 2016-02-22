@@ -29,11 +29,11 @@ function pinmap_providers() {
  *   Name of the provider.
  *
  * @return string|PinMap\Geocoder\Provider
- *   Geocoding provider.
+ *   Geocoding provider name or instance of an object.
  */
 function pinmap_provider($address = '', $provider = '') {
   $providers = pinmap_providers();
-  $provider = $provider ?: variable_get(__FUNCTION__, PINMAP_DEFAULT_GEOCODING_PROVIDER);
+  $provider = $provider ?: variable_get(__FUNCTION__, 'Google');
 
   if (isset($providers[$provider])) {
     return empty($address) ? $provider : new $providers[$provider]($address);
@@ -50,17 +50,4 @@ function pinmap_provider($address = '', $provider = '') {
  */
 function pinmap_default_content_type_disabled() {
   return variable_get(__FUNCTION__, FALSE);
-}
-
-/**
- * Get name for the form field for API key.
- *
- * @param string $provider
- *   Name of the provider.
- *
- * @return string
- *   Form element name.
- */
-function pinmap_api_key_field_name($provider) {
-  return 'pinmap_' . strtolower($provider) . '_api_key';
 }
