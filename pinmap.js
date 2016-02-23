@@ -274,11 +274,8 @@
             delete this.entity_id;
             bounds.extend(this);
           });
-          // This is a geographical center of Earth.
-          // @see https://en.wikipedia.org/wiki/Geographical_centre_of_Earth
-          map.setCenter({lat: 39, lng: 34});
-          map.setZoom(2);
-          //map.fitBounds(bounds);
+
+          map.fitBounds(bounds);
         }
         // Here will be available only one marker.
         else if (markersLength) {
