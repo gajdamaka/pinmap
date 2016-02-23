@@ -10,7 +10,7 @@ use CTools\Plugins\ContentTypes\ContentTypesInterface;
 
 class ContentType implements ContentTypesInterface {
 
-  const GOOGLE_MAPS_URL = 'http://maps.googleapis.com/maps/api/js';
+  const GOOGLE_MAPS_URL = '//maps.googleapis.com/maps/api/js';
   const STYLES_EDITOR_URL = 'http://www.mapstylr.com/map-style-editor';
 
   /**
