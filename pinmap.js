@@ -10,6 +10,12 @@
    * @type {Array}
    */
   var settings = Drupal.settings.PinMap.GoogleMap.ContentType;
+  /**
+   * DOM.
+   *
+   * @type {jQuery}
+   */
+  var $document = $(document);
 
   $('.pin-map-area').each(function(i) {
     /**
@@ -373,7 +379,7 @@
 
         setMapCenter(autocomplete.getPlace(), data);
 
-        $(document).trigger('pinMapPlaceChanged', $.extend({
+        $document.trigger('pinMapPlaceChanged', $.extend({
           item: i,
           value: $searchInput.val(),
           autocomplete: autocomplete

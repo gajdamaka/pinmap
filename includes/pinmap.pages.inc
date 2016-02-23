@@ -74,6 +74,7 @@ function _pinmap_main_form(array $form) {
     '#type' => 'submit',
     '#value' => t('Rebuild JSON'),
     '#submit' => ['pinmap_rebuild_data'],
+    '#limit_validation_errors' => [],
   ];
 
   return system_settings_form($form);
