@@ -95,14 +95,16 @@ function pinmap_node_info() {
  * Implements hook_node_presave().
  */
 function pinmap_node_presave(\stdClass $node) {
-  if (!pinmap_ignore_provider_api_call()) {
-    foreach (field_info_instances('node', $node->type) as $field => $instance) {
-      if ('addressfield' === $instance['widget']['module']) {
-        foreach ($node->{$field}[LANGUAGE_NONE] as &$item) {
-          if (empty($node->title)) {
-            $node->title = $item['organisation_name'];
-          }
+  $ignore_api_call = pinmap_ignore_provider_api_call();
 
+  foreach (field_info_instances('node', $node->type) as $field => $instance) {
+    if ('addressfield' === $instance['widget']['module']) {
+      foreach ($node->{$field}[LANGUAGE_NONE] as &$item) {
+        if (empty($node->title)) {
+          $node->title = $item['organisation_name'];
+        }
+
+        if (!$ignore_api_call) {
           $item['data'] = unserialize($item['data']);
 
           try {
