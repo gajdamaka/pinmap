@@ -51,3 +51,13 @@ function pinmap_provider($address = '', $provider = '') {
 function pinmap_default_content_type_disabled() {
   return variable_get(__FUNCTION__, FALSE);
 }
+
+/**
+ * Whether to use an API calls during import.
+ *
+ * @return bool
+ *   State.
+ */
+function pinmap_ignore_provider_api_call() {
+  return variable_get(__FUNCTION__, FALSE);
+}

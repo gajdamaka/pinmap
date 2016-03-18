@@ -95,29 +95,31 @@ function pinmap_node_info() {
  * Implements hook_node_presave().
  */
 function pinmap_node_presave(\stdClass $node) {
-  foreach (field_info_instances('node', $node->type) as $field => $instance) {
-    if ('addressfield' === $instance['widget']['module']) {
-      foreach ($node->{$field}[LANGUAGE_NONE] as &$item) {
-        if (empty($node->title)) {
-          $node->title = $item['organisation_name'];
-        }
+  if (!pinmap_ignore_provider_api_call()) {
+    foreach (field_info_instances('node', $node->type) as $field => $instance) {
+      if ('addressfield' === $instance['widget']['module']) {
+        foreach ($node->{$field}[LANGUAGE_NONE] as &$item) {
+          if (empty($node->title)) {
+            $node->title = $item['organisation_name'];
+          }
 
-        $item['data'] = unserialize($item['data']);
+          $item['data'] = unserialize($item['data']);
 
-        try {
-          $item['data']['coords'] = pinmap_provider(sprintf(
-            '%s, %s, %s, %s',
-            $item['thoroughfare'],
-            $item['postal_code'],
-            $item['locality'],
-            $item['country']
-          ))->fetch();
-        }
-        catch (\Exception $e) {
-          watchdog('pinmap', $e->getMessage());
-        }
+          try {
+            $item['data']['coords'] = pinmap_provider(sprintf(
+              '%s, %s, %s, %s',
+              $item['thoroughfare'],
+              $item['postal_code'],
+              $item['locality'],
+              $item['country']
+            ))->fetch();
+          }
+          catch (\Exception $e) {
+            watchdog('pinmap', $e->getMessage());
+          }
 
-        $item['data'] = serialize($item['data']);
+          $item['data'] = serialize($item['data']);
+        }
       }
     }
   }

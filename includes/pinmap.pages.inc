@@ -43,6 +43,13 @@ function _pinmap_main_form(array $form) {
     '#description' => t("Correctly-configured content type with an address field. You able to disable it but, to use this module in future, you'll need to define your own one. The default could be used as well, but initially created for demonstration."),
   ];
 
+  // @see pinmap_ignore_provider_api_call()
+  $form['pinmap_ignore_provider_api_call'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Do not fetch geocoordinates during the import?'),
+    '#description' => t('This reduce a time of the import but you will not be able to print markers on the map.'),
+  ];
+
   $form['pinmap_provider'] = [
     '#type' => 'select',
     '#title' => t('Provider'),
