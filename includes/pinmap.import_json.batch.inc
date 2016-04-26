@@ -16,7 +16,7 @@ function _pinmap_batch_import_json_address($content_type, $field_name, $json, ar
         $value = (array) $value;
         $value['coords'] = (array) $value['coords'];
 
-        $node = pinmap_create_node($content_type, $field_name, (array)$value);
+        $node = pinmap_create_node($content_type, $field_name, $value);
         $json[$id]->entity_id = $node->nid;
 
         $context['results'][] = FALSE;
