@@ -12,6 +12,7 @@
  */
 function pinmap_operation_titles() {
   return [
+    'import_json' => t('Import from JSON'),
     'import' => t('Import from CSV'),
     'export' => t('Export to CSV'),
   ];
@@ -130,6 +131,7 @@ function pinmap_create_node($content_type, $field_name, array $value) {
   // @see addressfield_field_schema()
   $value['country'] = strtoupper($countries[$key]);
   $value = array_merge($columns, $value);
+
   $value['data'] = serialize($value['data']);
 
   $node->{$field_name}[LANGUAGE_NONE][] = $value;
@@ -461,7 +463,7 @@ function pinmap_rebuild_data() {
         $json[] = $values;
       }
 
-      file_unmanaged_save_data(json_encode($json), sprintf(PINMAP_MARKERS_FILE, $content_type, $field_name), FILE_EXISTS_REPLACE);
+      file_unmanaged_save_data(json_encode($json), sprintf(PINMAP_MARKERS_FILE, $content_type, "$field_name-generate"), FILE_EXISTS_REPLACE);
     }
   }
 }
