@@ -57,12 +57,6 @@
        */
       var $searchInput = $searchForm.find('input');
       /**
-       * Search form submit button.
-       *
-       * @type {jQuery}
-       */
-      var $searchButton = $searchForm.find('button');
-      /**
        * Initially empty container for a Google map.
        *
        * @type {jQuery}
@@ -305,16 +299,6 @@
       // Set initial height of the map (configured on a backend).
       $mapContainer.css('height', options.map.height);
 
-      // Provide an ability to make an inaccurate search. Content from field
-      // for search will be used as a search query.
-      $searchButton.bind('click', function() {
-        // If we found something by a custom query, then chose first location
-        // from a results and move movable marker.
-        geocoder.geocode({address: $searchInput.val()}, function(results) {
-          setMapCenter(results[0]);
-        });
-      });
-
       // Hide search form if this is configured on a backend.
       if (options.search.disabled) {
         $searchForm.hide();
@@ -326,7 +310,15 @@
         $searchForm.bind('submit', function(event) {
           // Do not let form reload the page.
           event.preventDefault();
-          google.maps.event.trigger(autocomplete, 'place_changed');
+
+          // Provide an ability to make an inaccurate search. Content from field
+          // for search will be used as a search query.
+          // If we found something by a custom query, then chose first location
+          // from a results and move movable marker.
+          geocoder.geocode({address: $searchInput.val()}, function(results) {
+            setMapCenter(results[0]);
+            google.maps.event.trigger(autocomplete, 'place_changed');
+          });
         });
       }
 
