@@ -69,7 +69,7 @@ class ContentType implements ContentTypesInterface {
       // Relate field name with a content type to
       // be able to use correct name in a loop.
       list($content_type, $field_name) = explode(':', $item);
-      $uri = sprintf(PINMAP_MARKERS_FILE, $content_type, "$field_name-generate");
+      $uri = sprintf(PINMAP_MARKERS_FILE, $content_type, "$field_name-source");
 
       if (file_exists($uri)) {
         $variables['info']['files'][] = file_create_url($uri);

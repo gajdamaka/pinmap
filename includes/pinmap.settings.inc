@@ -48,8 +48,8 @@ function pinmap_provider($address = '', $provider = '') {
  * @return bool
  *   State.
  */
-function pinmap_default_content_type_disabled() {
-  return variable_get(__FUNCTION__, FALSE);
+function pinmap_default_content_type_disabled($value = NULL) {
+  return pinmap_variable(__FUNCTION__, $value);
 }
 
 /**
@@ -58,6 +58,27 @@ function pinmap_default_content_type_disabled() {
  * @return bool
  *   State.
  */
-function pinmap_ignore_provider_api_call() {
-  return variable_get(__FUNCTION__, FALSE);
+function pinmap_ignore_provider_api_call($value = NULL) {
+  return pinmap_variable(__FUNCTION__, $value);
+}
+
+/**
+ * Get/set variable value.
+ *
+ * @param string $variable
+ *   The name of variable.
+ * @param null|mixed $value
+ *   Value to update the variable.
+ *
+ * @return mixed
+ *   Value of the variable.
+ */
+function pinmap_variable($variable, $value = NULL) {
+  if (NULL !== $value) {
+    variable_set($variable, $value);
+
+    return $value;
+  }
+
+  return variable_get($variable, FALSE);
 }

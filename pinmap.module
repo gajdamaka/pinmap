@@ -126,3 +126,21 @@ function pinmap_node_presave(\stdClass $node) {
     }
   }
 }
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter().
+ */
+function pinmap_form_node_form_alter(array &$form, array &$form_state, $form_id) {
+  if (_pinmap_available_content_type($form_state['node']->type)) {
+    $form['#submit'][] = 'pinmap_rebuild_data';
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function pinmap_form_node_delete_confirm_alter(array &$form, array &$form_state, $form_id) {
+  if (_pinmap_available_content_type($form['#node']->type)) {
+    $form['#submit'][] = 'pinmap_rebuild_data';
+  }
+}
