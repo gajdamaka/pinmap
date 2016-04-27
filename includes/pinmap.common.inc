@@ -12,7 +12,6 @@
  */
 function pinmap_operation_titles() {
   return [
-    'import_json' => t('Import from JSON'),
     'import' => t('Import from CSV'),
     'export' => t('Export to CSV'),
   ];
@@ -131,7 +130,6 @@ function pinmap_create_node($content_type, $field_name, array $value) {
   // @see addressfield_field_schema()
   $value['country'] = strtoupper($countries[$key]);
   $value = array_merge($columns, $value);
-
   $value['data'] = serialize($value['data']);
 
   $node->{$field_name}[LANGUAGE_NONE][] = $value;
@@ -444,6 +442,7 @@ function pinmap_rebuild_data() {
   foreach ($fields as $content_type => $field_names) {
     foreach ($field_names as $field_name) {
       $json = [];
+      $json_markers = [];
 
       foreach (pinamp_field_query('node', $content_type, $field_name, $columns)->execute()->fetchAll() as $entry) {
         $values = [];
@@ -459,11 +458,39 @@ function pinmap_rebuild_data() {
         }
 
         unset($values['data']);
+        $json_markers[] = $values;
 
+        unset($values['entity_id']);
         $json[] = $values;
       }
 
-      file_unmanaged_save_data(json_encode($json), sprintf(PINMAP_MARKERS_FILE, $content_type, "$field_name-generate"), FILE_EXISTS_REPLACE);
+      file_unmanaged_save_data(json_encode($json_markers), sprintf(PINMAP_MARKERS_FILE, $content_type, "$field_name-generate"), FILE_EXISTS_REPLACE);
+      file_unmanaged_save_data(json_encode($json), sprintf(PINMAP_MARKERS_FILE, $content_type, $field_name), FILE_EXISTS_REPLACE);
+    }
+  }
+}
+
+/**
+ * Import all JSON sources.
+ */
+function pinmap_import_data() {
+  // Process all PinMap panes.
+  foreach (ctools_api_get_panes_of_type('PinMap\GoogleMap\ContentType') as $pane) {
+    $conf = unserialize($pane->configuration);
+
+    // Handle multiple sources.
+    //
+    // @code
+    // ['address:pinmap_address', 'another_content_type:another_field_name']
+    // @endcode
+    foreach ($conf['info']['content']['field'] as $item) {
+      list($content_type, $field_name) = explode(':', $item);
+      $file = sprintf(PINMAP_MARKERS_FILE, $content_type, $field_name);
+
+      if (file_exists($file)) {
+        $operations[] = [$content_type, $field_name, file_get_contents($file)];
+        pinmap_batch_set('import_json', $operations);
+      }
     }
   }
 }
