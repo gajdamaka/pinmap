@@ -417,21 +417,17 @@ function pinamp_field_query($entity_type, $bundle, $field_name, array $columns =
 /**
  * Rebuild all JSON sources.
  */
-function pinmap_rebuild_data(array $form, array &$form_state) {
+function pinmap_rebuild_data() {
   // Field columns.
   $columns = ['entity_id', 'organisation_name', 'thoroughfare', 'postal_code', 'locality', 'country', 'data'];
-  $fields = [];
 
-  foreach (_pinmap_entity_options() as $item) {
-    $fields[$item['content_type']][] = $item['field_name'];
-  }
-
-  foreach ($fields as $content_type => $field_names) {
+  foreach (_pinmap_entity_options() as $content_type => $field_names) {
     foreach ($field_names as $field_name) {
       $json = [
-        // The file with "source" prefix contains the data which represent current state in database.
+        // The file with "source" prefix contains the data
+        // which represent current state in database.
         'source' => [],
-        // Original file is similar to source but does not contain node IDs.
+        // Original file is similar to "source" but does not contain node IDs.
         'original' => [],
       ];
 
@@ -456,27 +452,14 @@ function pinmap_rebuild_data(array $form, array &$form_state) {
       }
 
       foreach ($json as $key => $data) {
-        file_unmanaged_save_data(json_encode($data), sprintf(PINMAP_MARKERS_FILE, $content_type, "$field_name-$key"), FILE_EXISTS_REPLACE);
+        file_unmanaged_save_data(
+          json_encode($data),
+          sprintf(PINMAP_MARKERS_FILE, $content_type, "$field_name-$key"),
+          FILE_EXISTS_REPLACE
+        );
       }
     }
   }
-}
-
-/**
- * Import all JSON sources.
- */
-function pinmap_import_data() {
-  $operations = [];
-
-  foreach (_pinmap_entity_options() as $item) {
-    $file = sprintf(PINMAP_MARKERS_FILE, $item['content_type'], $item['field_name'] . '-original');
-
-    if (file_exists($file)) {
-      $operations[] = [$item['content_type'], $item['field_name'], file_get_contents($file)];
-    }
-  }
-
-  pinmap_batch_set('import_json', $operations);
 }
 
 /**
@@ -547,8 +530,8 @@ function _pinmap_operation_accessible($arguments) {
 /**
  * Get entity type and name of location field which select in PinMap pane.
  *
- * @return array
- *   Return array contains entity type and field name.
+ * @return array[]
+ *   Return an associative array of arrays of fields keyed by content type.
  */
 function _pinmap_entity_options() {
   $options = [];
@@ -567,10 +550,7 @@ function _pinmap_entity_options() {
       // be able to use correct name in a loop.
       list($content_type, $field_name) = explode(':', $item);
 
-      $options[] = [
-        'content_type' => $content_type,
-        'field_name' => $field_name,
-      ];
+      $options[$content_type][] = $field_name;
     }
   }
 
@@ -581,11 +561,11 @@ function _pinmap_entity_options() {
  * Check content type in PinMap pane configuration.
  *
  * @param string $type
- *   Node type.
+ *   Content type.
  *
  * @return bool
  *   Content type contains in PinMap pane settings.
  */
 function _pinmap_available_content_type($type) {
-  return FALSE !== array_search($type, array_column(_pinmap_entity_options(), 'content_type'));
+  return isset(_pinmap_entity_options()[$type]);
 }

@@ -60,10 +60,7 @@ function pinmap_permission() {
     'title' => t('Allow to administer Pin Map'),
   ];
 
-  foreach ([
-    'import' => t('Allow addresses import'),
-    'export' => t('Allow addresses export'),
-  ] as $operation => $title) {
+  foreach (pinmap_operation_titles() as $operation => $title) {
     $permissions["access pinmap $operation"] = [
       'title' => $title,
     ];
@@ -128,19 +125,10 @@ function pinmap_node_presave(\stdClass $node) {
 }
 
 /**
- * Implements hook_form_BASE_FORM_ID_alter().
+ * Implements hook_form_alter().
  */
-function pinmap_form_node_form_alter(array &$form, array &$form_state, $form_id) {
-  if (_pinmap_available_content_type($form_state['node']->type)) {
-    $form['#submit'][] = 'pinmap_rebuild_data';
-  }
-}
-
-/**
- * Implements hook_form_FORM_ID_alter().
- */
-function pinmap_form_node_delete_confirm_alter(array &$form, array &$form_state, $form_id) {
-  if (_pinmap_available_content_type($form['#node']->type)) {
+function pinmap_form_alter(array &$form, array &$form_state, $form_id) {
+  if (isset($form['#node'], $form['#node']->type) && _pinmap_available_content_type($form['#node']->type)) {
     $form['#submit'][] = 'pinmap_rebuild_data';
   }
 }

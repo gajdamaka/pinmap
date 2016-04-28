@@ -11,14 +11,16 @@
  *
  * @internal
  */
-function _pinmap_main_form(array $form) {
-  $items = [];
-  $options = [];
+function _pinmap_main_form(array $form, array &$form_state) {
+  $providers = [
+    'form' => [],
+    'options' => [],
+  ];
 
   foreach (pinmap_providers() as $name => $class) {
-    $options[$name] = $name;
+    $providers['options'][$name] = $name;
 
-    $items[$class::variable('api_key')] = [
+    $providers['form'][$class::variable('api_key')] = [
       '#type' => 'textfield',
       '#title' => t('@provider API key', ['@provider' => $name]),
       '#description' => t("With API key you'll be able to perform more requests to !provider API. Read more about an API: !api_docs.", [
@@ -53,10 +55,10 @@ function _pinmap_main_form(array $form) {
   $form['pinmap_provider'] = [
     '#type' => 'select',
     '#title' => t('Provider'),
-    '#options' => $options,
+    '#options' => $providers['options'],
   ];
 
-  $form += $items;
+  $form += $providers['form'];
 
   $form['#validate'][] = __FUNCTION__ . '_validate';
   // Reset content types cache to react on disabling default content type.
@@ -68,42 +70,6 @@ function _pinmap_main_form(array $form) {
       $form[$child]['#default_value'] = $child();
     }
   }
-
-  $form['pinmap_data'] = [
-    '#type' => 'fieldset',
-    '#title' => t('Link to JSON file'),
-    '#collapsed' => TRUE,
-    '#collapsible' => TRUE,
-  ];
-
-  foreach (_pinmap_entity_options() as $item) {
-    $file = sprintf(PINMAP_MARKERS_FILE, $item['content_type'], $item['field_name'] . '-original');
-
-    if (file_exists($file)) {
-      $link = file_create_url($file);
-
-      $form['pinmap_data'][] = [
-        '#markup' => t('This file !file contains latest data.', [
-          '!file' => l($link, $link, ['attributes' => ['download' => '']]),
-        ]),
-      ];
-    }
-  }
-
-  $form['rebuild'] = [
-    '#type' => 'fieldset',
-    '#title' => t('Import data'),
-    '#collapsed' => TRUE,
-    '#collapsible' => TRUE,
-    '#description' => t('When you want imported data from JSON file.'),
-  ];
-
-  $form['rebuild'][] = [
-    '#type' => 'submit',
-    '#value' => t('Import JSON'),
-    '#submit' => ['pinmap_import_data'],
-    '#limit_validation_errors' => [],
-  ];
 
   return system_settings_form($form);
 }
