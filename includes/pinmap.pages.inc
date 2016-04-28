@@ -69,18 +69,39 @@ function _pinmap_main_form(array $form) {
     }
   }
 
-  $form['rebuild'] = [
+  $form['pinmap_data'] = [
     '#type' => 'fieldset',
-    '#title' => t('Rebuild data'),
+    '#title' => t('Link to JSON file'),
     '#collapsed' => TRUE,
     '#collapsible' => TRUE,
-    '#description' => t('When you have imported, changed or added something then data in JSON sources becomes outdated.'),
+  ];
+
+  foreach (_pinmap_entity_options() as $item) {
+    $file = sprintf(PINMAP_MARKERS_FILE, $item['content_type'], $item['field_name'] . '-original');
+
+    if (file_exists($file)) {
+      $link = file_create_url($file);
+
+      $form['pinmap_data'][] = [
+        '#markup' => t('This file !file contains latest data.', [
+          '!file' => l($link, $link, ['attributes' => ['download' => '']]),
+        ]),
+      ];
+    }
+  }
+
+  $form['rebuild'] = [
+    '#type' => 'fieldset',
+    '#title' => t('Import data'),
+    '#collapsed' => TRUE,
+    '#collapsible' => TRUE,
+    '#description' => t('When you want imported data from JSON file.'),
   ];
 
   $form['rebuild'][] = [
     '#type' => 'submit',
-    '#value' => t('Rebuild JSON'),
-    '#submit' => ['pinmap_rebuild_data'],
+    '#value' => t('Import JSON'),
+    '#submit' => ['pinmap_import_data'],
     '#limit_validation_errors' => [],
   ];
 

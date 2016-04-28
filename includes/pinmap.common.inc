@@ -12,7 +12,6 @@
  */
 function pinmap_operation_titles() {
   return [
-    'import_json' => t('Import from JSON'),
     'import' => t('Import from CSV'),
     'export' => t('Export to CSV'),
   ];
@@ -131,7 +130,6 @@ function pinmap_create_node($content_type, $field_name, array $value) {
   // @see addressfield_field_schema()
   $value['country'] = strtoupper($countries[$key]);
   $value = array_merge($columns, $value);
-
   $value['data'] = serialize($value['data']);
 
   $node->{$field_name}[LANGUAGE_NONE][] = $value;
@@ -419,31 +417,23 @@ function pinamp_field_query($entity_type, $bundle, $field_name, array $columns =
 /**
  * Rebuild all JSON sources.
  */
-function pinmap_rebuild_data() {
+function pinmap_rebuild_data(array $form, array &$form_state) {
   // Field columns.
   $columns = ['entity_id', 'organisation_name', 'thoroughfare', 'postal_code', 'locality', 'country', 'data'];
   $fields = [];
 
-  // Process all PinMap panes.
-  foreach (ctools_api_get_panes_of_type('PinMap\GoogleMap\ContentType') as $pane) {
-    $conf = unserialize($pane->configuration);
-
-    // Handle multiple sources.
-    //
-    // @code
-    // ['address:pinmap_address', 'another_content_type:another_field_name']
-    // @endcode
-    foreach ($conf['info']['content']['field'] as $item) {
-      // Relate field name with a content type to
-      // be able to use correct name in a loop.
-      list($content_type, $field_name) = explode(':', $item);
-      $fields[$content_type][] = $field_name;
-    }
+  foreach (_pinmap_entity_options() as $item) {
+    $fields[$item['content_type']][] = $item['field_name'];
   }
 
   foreach ($fields as $content_type => $field_names) {
     foreach ($field_names as $field_name) {
-      $json = [];
+      $json = [
+        // The file with "source" prefix contains the data which represent current state in database.
+        'source' => [],
+        // Original file is similar to source but does not contain node IDs.
+        'original' => [],
+      ];
 
       foreach (pinamp_field_query('node', $content_type, $field_name, $columns)->execute()->fetchAll() as $entry) {
         $values = [];
@@ -459,13 +449,34 @@ function pinmap_rebuild_data() {
         }
 
         unset($values['data']);
+        $json['source'][] = $values;
 
-        $json[] = $values;
+        unset($values['entity_id']);
+        $json['original'][] = $values;
       }
 
-      file_unmanaged_save_data(json_encode($json), sprintf(PINMAP_MARKERS_FILE, $content_type, "$field_name-generate"), FILE_EXISTS_REPLACE);
+      foreach ($json as $key => $data) {
+        file_unmanaged_save_data(json_encode($data), sprintf(PINMAP_MARKERS_FILE, $content_type, "$field_name-$key"), FILE_EXISTS_REPLACE);
+      }
     }
   }
+}
+
+/**
+ * Import all JSON sources.
+ */
+function pinmap_import_data() {
+  $operations = [];
+
+  foreach (_pinmap_entity_options() as $item) {
+    $file = sprintf(PINMAP_MARKERS_FILE, $item['content_type'], $item['field_name'] . '-original');
+
+    if (file_exists($file)) {
+      $operations[] = [$item['content_type'], $item['field_name'], file_get_contents($file)];
+    }
+  }
+
+  pinmap_batch_set('import_json', $operations);
 }
 
 /**
@@ -531,4 +542,50 @@ function _pinmap_batch_finished($success, array $results, array $operations, $ti
  */
 function _pinmap_operation_accessible($arguments) {
   return !empty(pinmap_get_valid_fields()) && user_access($arguments);
+}
+
+/**
+ * Get entity type and name of location field which select in PinMap pane.
+ *
+ * @return array
+ *   Return array contains entity type and field name.
+ */
+function _pinmap_entity_options() {
+  $options = [];
+
+  // Process all PinMap panes.
+  foreach (ctools_api_get_panes_of_type('PinMap\GoogleMap\ContentType') as $pane) {
+    $conf = unserialize($pane->configuration);
+
+    // Handle multiple sources.
+    //
+    // @code
+    // ['address:pinmap_address', 'another_content_type:another_field_name']
+    // @endcode
+    foreach ($conf['info']['content']['field'] as $item) {
+      // Relate field name with a content type to
+      // be able to use correct name in a loop.
+      list($content_type, $field_name) = explode(':', $item);
+
+      $options[] = [
+        'content_type' => $content_type,
+        'field_name' => $field_name,
+      ];
+    }
+  }
+
+  return $options;
+}
+
+/**
+ * Check content type in PinMap pane configuration.
+ *
+ * @param string $type
+ *   Node type.
+ *
+ * @return bool
+ *   Content type contains in PinMap pane settings.
+ */
+function _pinmap_available_content_type($type) {
+  return FALSE !== array_search($type, array_column(_pinmap_entity_options(), 'content_type'));
 }
