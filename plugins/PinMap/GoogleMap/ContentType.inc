@@ -56,6 +56,8 @@ class ContentType implements ContentTypesInterface {
    */
   public static function preprocess(array &$variables, array &$arguments, \ctools_context $context = NULL) {
     $icon = file_load($variables['info']['icon']['url']);
+    // The "places" library needed to use an autocomplete.
+    $map_args = '?libraries=places';
     $settings = [];
 
     $variables['info']['files'] = [];
@@ -76,11 +78,15 @@ class ContentType implements ContentTypesInterface {
       }
     }
 
+    if (!empty($variables['info']['map']['language'])) {
+      // Set map language.
+      $map_args .= '&language=' . $variables['info']['map']['language'];
+    }
+
     function_exists('libraries_load') && libraries_load('markerclustererplus');
     // Set JS settings to the same namespace like this object.
     drupal_array_set_nested_value($settings, array_merge(explode('\\', __CLASS__), [self::$i++]), $variables['info']);
-    // The "places" library needed to use an autocomplete.
-    drupal_add_js(self::GOOGLE_MAPS_URL . '?libraries=places', 'external');
+    drupal_add_js(self::GOOGLE_MAPS_URL . $map_args, 'external');
     drupal_add_js(drupal_get_path('module', 'pinmap') . '/pinmap.js', ['scope' => 'footer']);
     drupal_add_js($settings, 'setting');
   }
@@ -151,6 +157,16 @@ class ContentType implements ContentTypesInterface {
       '#title' => t('Height'),
       '#default_value' => 400,
     ];
+
+    $form['info']['map']['language'] = [
+      '#type' => 'select',
+      '#title' => t('Language'),
+      '#options' => [],
+    ];
+
+    foreach (language_list() as $language) {
+      $form['info']['map']['language']['#options'][$language->language] = $language->name;
+    }
 
     $form['info']['map']['styles'] = [
       '#type' => 'textarea',
