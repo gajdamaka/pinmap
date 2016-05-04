@@ -62,6 +62,7 @@ class ContentType implements ContentTypesInterface {
     $settings = [];
 
     $variables['info']['files'] = [];
+
     if (FALSE !== $icon) {
       $variables['info']['icon']['url'] = file_create_url($icon->uri);
     }
