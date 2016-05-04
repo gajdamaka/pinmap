@@ -11,6 +11,7 @@ use CTools\Plugins\ContentTypes\ContentTypesInterface;
 class ContentType implements ContentTypesInterface {
 
   const GOOGLE_MAPS_URL = '//maps.googleapis.com/maps/api/js';
+  const GOOGLE_LANGUAGE_SUPPORT = 'https://developers.google.com/maps/faq#languagesupport';
   const STYLES_EDITOR_URL = 'http://www.mapstylr.com/map-style-editor';
 
   /**
@@ -57,11 +58,10 @@ class ContentType implements ContentTypesInterface {
   public static function preprocess(array &$variables, array &$arguments, \ctools_context $context = NULL) {
     $icon = file_load($variables['info']['icon']['url']);
     // The "places" library needed to use an autocomplete.
-    $map_args = '?libraries=places';
+    $map_args['libraries'] = 'places';
     $settings = [];
 
     $variables['info']['files'] = [];
-
     if (FALSE !== $icon) {
       $variables['info']['icon']['url'] = file_create_url($icon->uri);
     }
@@ -80,13 +80,13 @@ class ContentType implements ContentTypesInterface {
 
     if (!empty($variables['info']['map']['language'])) {
       // Set map language.
-      $map_args .= '&language=' . $variables['info']['map']['language'];
+      $map_args['language'] = $variables['info']['map']['language'];
     }
 
     function_exists('libraries_load') && libraries_load('markerclustererplus');
     // Set JS settings to the same namespace like this object.
     drupal_array_set_nested_value($settings, array_merge(explode('\\', __CLASS__), [self::$i++]), $variables['info']);
-    drupal_add_js(self::GOOGLE_MAPS_URL . $map_args, 'external');
+    drupal_add_js(self::GOOGLE_MAPS_URL . '?' . http_build_query($map_args), 'external');
     drupal_add_js(drupal_get_path('module', 'pinmap') . '/pinmap.js', ['scope' => 'footer']);
     drupal_add_js($settings, 'setting');
   }
@@ -159,14 +159,17 @@ class ContentType implements ContentTypesInterface {
     ];
 
     $form['info']['map']['language'] = [
-      '#type' => 'select',
+      '#type' => 'textfield',
       '#title' => t('Language'),
-      '#options' => [],
+      '#description' => t('See the list of supported languages here: !link', [
+        '!link' => l(self::GOOGLE_LANGUAGE_SUPPORT, self::GOOGLE_LANGUAGE_SUPPORT, [
+          'attributes' => [
+            'target' => '_blank',
+          ],
+        ]),
+      ]),
+      '#default_value' => 'en-GB',
     ];
-
-    foreach (language_list() as $language) {
-      $form['info']['map']['language']['#options'][$language->language] = $language->name;
-    }
 
     $form['info']['map']['styles'] = [
       '#type' => 'textarea',
