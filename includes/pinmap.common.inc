@@ -507,7 +507,7 @@ function _pinmap_batch_finished($success, array $results, array $operations, $ti
     $status = 'error';
   }
 
-  drupal_set_message(implode('<br>', $message), $status);
+  drupal_set_message(implode('<br />', $message), $status);
 }
 
 /**
